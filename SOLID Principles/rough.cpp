@@ -17,9 +17,9 @@ public:
 // 1. ShoppingCart : Only responsible for Cart related business logic.
 class ShoppingCart{
 private:
-    vector<Product*> products; // store heap-allocated
+    vector<Product*> products; // Store heap-allocated products
 
-public:
+public: 
     void addProduct(Product* p){
         products.push_back(p);
     }
@@ -38,12 +38,12 @@ public:
     }
 };
 
-// 2. ShoppingCartPrinter : Only responsible for printing invoices
+// 2. ShoppingCartPrinter: Only responsible for printing invoice
 class ShoppingCartPrinter{
 private:
     ShoppingCart* cart;
 
-public: 
+public:
     ShoppingCartPrinter(ShoppingCart* cart){
         this->cart = cart;
     }
@@ -51,40 +51,57 @@ public:
     void printInvoice(){
         cout << "Shopping Cart Invoice: \n";
         for(auto p : cart->getProducts()){
-            cout << p->name << " - Rs. " << p->price << endl;
+            cout << p->name << " - Rs " << p->price << endl;
         }
-        cout << "Total : Rs. " << cart->calculateTotal() << endl;
+        cout << "Total: Rs " << cart->calculateTotal() << endl;
     }
 };
 
-// 3. ShoppingCartStorage: Only responsible for saving cart to DB
-class ShoppingCartStorage{
-private: 
+// Abstract class
+class Persistence{
+private:
     ShoppingCart* cart;
 
 public:
-    ShoppingCartStorage(ShoppingCart* cart){
-        this->cart = cart;
-    }
+    virtual void save(ShoppingCart* cart) = 0; // Pure Virtual function
+};
 
-    void saveToDatabase(){
-        cout << "Saving shopping cart to database..." << endl;
+class SQLPersistence : public Persistence{
+public:
+    void save(ShoppingCart* cart) override {
+        cout << "Saving shopping cart to SQL DB..." << endl;
+    }
+};
+
+class MongoPersistence : public Persistence{
+public:
+    void save(ShoppingCart* cart) override {
+        cout << "Saving shopping cart to Mongo DB..." << endl;
+    }
+};
+
+class FilePersistence : public Persistence{
+public:
+    void save(ShoppingCart* cart) override {
+        cout << "Saving shopping cart to a File..." << endl;
     }
 };
 
 int main(){
     ShoppingCart* cart = new ShoppingCart();
-
     cart->addProduct(new Product("Laptop", 50000));
-    cart->addProduct(new Product("Mouse", 1000));
+    cart->addProduct(new Product("Mouse", 2000));
 
     ShoppingCartPrinter* printer = new ShoppingCartPrinter(cart);
-
     printer->printInvoice();
 
-    ShoppingCartStorage* DB = new ShoppingCartStorage(cart);
+    Persistence* db = new SQLPersistence();
+    Persistence* mongo = new MongoPersistence();
+    Persistence* file = new FilePersistence();
 
-    DB->saveToDatabase();
+    db->save(cart); // Save to SQL database
+    mongo->save(cart); // Save to MongoDB
+    file->save(cart); // Save to file
 
     return 0;
 }
